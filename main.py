@@ -7,9 +7,11 @@ import joblib as jb
 import plotly.express as px
 import folium
 from streamlit_folium import folium_static
+st.set_option('deprecation.showPyplotGlobalUse', False)
+
 
 # Load the machine learning models
-model = jb.load('randomforest_weather.joblib')
+model = jb.load('ann_weather.joblib')
 model1 = jb.load('linear_regression_model.joblib')
 df = pd.read_csv('ESK2033.csv')
 df = df.dropna()
@@ -58,18 +60,33 @@ elif choice == 'Model 1':
 elif choice == 'Model 2':
     st.header('Model 2')
     st.write('This model predicts energy consumption based on variables Y1, Y2, Y3, and Y4.')
-    
+        
     # Get the selected season from the user
     season = st.selectbox('Select a season', ['winter', 'spring', 'summer', 'fall'])
-
-    # Filter the data by the selected season
-    season_data = data[data['SEASON'] == season]
-
-
-    # Load the CSV data
     data = pd.read_csv('station_weather_data.csv')
     data = data.dropna()
+    # Filter the data by the selected seasom
 
+    seasons = {
+    12: 'winter',
+    1: 'winter',
+    2: 'winter',
+    3: 'spring',
+    4: 'spring',
+    5: 'spring',
+    6: 'summer',
+    7: 'summer',
+    8: 'summer',
+    9: 'fall',
+    10: 'fall',
+    11: 'fall'
+    }
+    data['DATE'] = pd.to_datetime(data['DATE'])
+    # Add a new column for the season
+    data['SEASON'] = data['DATE'].apply(lambda x: seasons[x.month])
+    # Load the CSV data
+    
+    season_data = data[data['SEASON'] == season]
     # Load the model
 
     # Plot the data on a map
