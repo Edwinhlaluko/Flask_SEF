@@ -7,6 +7,8 @@ import joblib as jb
 import plotly.express as px
 import folium
 from streamlit_folium import folium_static
+from folium.plugins import MarkerCluster
+
 st.set_option('deprecation.showPyplotGlobalUse', False)
 
 
@@ -28,17 +30,17 @@ st.title('SmartEnergyForecast(SEF) Dashboard App')
 
 # Add a sidebar
 st.sidebar.title('Navigation')
-menu = ['Home', 'Model 1', 'Model 2']
+menu = ['Home', 'Prediction Model', 'Clustering Model']
 choice = st.sidebar.selectbox('Select a page', menu)
 
 # Define the content of the pages
 if choice == 'Home':
-    st.header('Welcome to the SmartEnergyForecas(SEF) Dashboard App!')
-    st.write('This app allows you to predict energy consumption based on different variables.')
+    st.header('Welcome to the SmartEnergyForecast(SEF) Dashboard App!')
+    st.write('This app allows us to predict energy demand based on different variables, It also allows us to make recommendations of renewable energy source based on weather patterns of a specific weather station.')
     st.write('Please select a page from the sidebar to continue.')
 
-elif choice == 'Model 1':
-    st.header('Model 1')
+elif choice == 'Prediction Model':
+    st.header('Prediction Model')
     st.write('This model predicts energy consumption based on variables ResidualDemand, RSAContractedDemand, ThermalGeneration, PumpedWaterGeneration, and PumpedWaterSCOPumping.')
     with st.form(key='model1_form'):
         rsa_contracted_demand = st.number_input('RSA Contracted Demand', min_value=0, max_value=100000, value=50, step=1)
@@ -57,14 +59,16 @@ elif choice == 'Model 1':
     
     st.plotly_chart(fig)
 
-elif choice == 'Model 2':
-    st.header('Model 2')
+elif choice == 'Clustering Model':
+    st.header('Clustering Model')
     st.write('This model predicts energy consumption based on variables Y1, Y2, Y3, and Y4.')
         
     # Get the selected season from the user
     season = st.selectbox('Select a season', ['winter', 'spring', 'summer', 'fall'])
     data = pd.read_csv('station_weather_data.csv')
     data = data.dropna()
+
+
     # Filter the data by the selected seasom
 
     seasons = {
@@ -87,19 +91,57 @@ elif choice == 'Model 2':
     # Load the CSV data
     
     season_data = data[data['SEASON'] == season]
-    # Load the model
+    
+  
+m = folium.Map(location=[data['LATITUDE'].mean(), data['LONGITUDE'].mean()], zoom_start=10)
+marker_cluster = MarkerCluster().add_to(m)
 
-    # Plot the data on a map
-    m = folium.Map(location=[data['LATITUDE'].mean(), data['LONGITUDE'].mean()], zoom_start=10)
-    for index, row in data.iterrows():
-        prcp = row['PRCP']
-        tmax = row['TMAX']
-        tmin = row['TMIN']
-        tavg = row['TAVG']
-        input_data = [[prcp, tmax, tmin, tavg]]
-        energy_type = model.predict(input_data)[0]
-        folium.Marker([row['LATITUDE'], row['LONGITUDE']], popup=f"Station: {row['STATION']}\nEnergy Type: {energy_type}").add_to(m)
-    folium_static(m)
+for index, row in data.iterrows():
+    prcp = row['PRCP']
+    tmax = row['TMAX']
+    tmin = row['TMIN']
+    tavg = row['TAVG']
+    input_data = [[prcp, tmax, tmin, tavg]]
+    energy_type = model.predict(input_data)[0]
+    
+    if energy_type == 'Solar':
+        color = 'green'
+    elif energy_type == 'Non-Renewable':
+        color = 'red'
+    else:
+        color = 'gray'
+        
+    folium.Marker([row['LATITUDE'], row['LONGITUDE']], 
+                  popup=f"Station: {row['STATION']}\nEnergy Type: {energy_type}", 
+                  icon=folium.Icon(color=color)).add_to(marker_cluster)
+    
+    # Add location icons with different colors
+    if energy_type == 'Solar':
+        icon_color = 'green'
+    elif energy_type == 'Wind':
+        icon_color = 'red'
+    else:
+        icon_color = 'gray'
+        
+    folium.Marker([row['LATITUDE'], row['LONGITUDE']], 
+                  icon=folium.Icon(color=icon_color)).add_to(m)
+
+folium_static(m)
+
+
+
+    # # Plot the data on a map
+    # m = folium.Map(location=[data['LATITUDE'].mean(), data['LONGITUDE'].mean()], zoom_start=10)
+    # for index, row in data.iterrows():
+    #     prcp = row['PRCP']
+    #     tmax = row['TMAX']
+    #     tmin = row['TMIN']
+    #     tavg = row['TAVG']
+    #     input_data = [[prcp, tmax, tmin, tavg]]
+    #     energy_type = model.predict(input_data)[0]
+    #     folium.Marker([row['LATITUDE'], row['LONGITUDE']], popup=f"Station: {row['STATION']}\nEnergy Type: {energy_type}").add_to(m)
+    # folium_static(m)
+    
 
 
 # Add a footer
