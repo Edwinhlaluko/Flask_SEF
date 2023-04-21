@@ -11,13 +11,11 @@ from folium.plugins import MarkerCluster
 
 st.set_option('deprecation.showPyplotGlobalUse', False)
 
-
 # Load the machine learning models
 model = jb.load('ann_weather.joblib')
 model1 = jb.load('linear_regression_model.joblib')
 df = pd.read_csv('ESK2033.csv')
 df = df.dropna()
-#model2 = load('linear_regression_model.joblib')
 
 # Define a function to make predictions using the models
 def predict(model, input_data):
@@ -30,7 +28,7 @@ st.title('SmartEnergyForecast(SEF) Dashboard App')
 
 # Add a sidebar
 st.sidebar.title('Navigation')
-menu = ['Home', 'Prediction Model', 'Clustering Model']
+menu = ['Home', 'Prediction Model', 'Clustering Model', 'Dashboard']
 choice = st.sidebar.selectbox('Select a page', menu)
 
 # Define the content of the pages
@@ -61,15 +59,12 @@ elif choice == 'Prediction Model':
 
 elif choice == 'Clustering Model':
     st.header('Clustering Model')
-    st.write('This model predicts energy consumption based on variables Y1, Y2, Y3, and Y4.')
+    st.write('This page shows recommendations of renewable energy source based on weather patterns of a specific weather station.')
         
     # Get the selected season from the user
     season = st.selectbox('Select a season', ['winter', 'spring', 'summer', 'fall'])
     data = pd.read_csv('station_weather_data.csv')
     data = data.dropna()
-
-
-    # Filter the data by the selected seasom
 
     seasons = {
     12: 'winter',
@@ -88,61 +83,93 @@ elif choice == 'Clustering Model':
     data['DATE'] = pd.to_datetime(data['DATE'])
     # Add a new column for the season
     data['SEASON'] = data['DATE'].apply(lambda x: seasons[x.month])
-    # Load the CSV data
     
     season_data = data[data['SEASON'] == season]
-    
+   
+
+    m = folium.Map(location=[data['LATITUDE'].mean(), data['LONGITUDE'].mean()], zoom_start=10)
+    marker_cluster = MarkerCluster().add_to(m)
+
+    for index, row in data.iterrows():
+        prcp = row['PRCP']
+        tmax = row['TMAX']
+        tmin = row['TMIN']
+        tavg = row['TAVG']
+        input_data = [[prcp, tmax, tmin, tavg]]
+        energy_type = model.predict(input_data)[0]
+
+        if energy_type == 'Solar':
+            color = 'green'
+        elif energy_type == 'Non-Renewable':
+            color = 'red'
+        else:
+            color = 'gray'
+
+        folium.Marker([row['LATITUDE'], row['LONGITUDE']], 
+                    popup=f"Station: {row['STATION']}\nEnergy Type: {energy_type}", 
+                    icon=folium.Icon(color=color)).add_to(marker_cluster)
+
+        # Add location icons with different colors
+        if energy_type == 'Solar':
+            icon_color = 'green'
+        elif energy_type == 'Wind':
+            icon_color = 'red'
+        else:
+            icon_color = 'gray'
+
+        folium.Marker([row['LATITUDE'], row['LONGITUDE']], 
+                    icon=folium.Icon(color=icon_color)).add_to(m)
+
+    folium_static(m)
+
+
+elif choice == 'Dashboard':  # Add new elif statement
+    st.header('SmartEnergyForecast(SEF) Dashboard')
+    st.write('This page shows recommendations of renewable energy source based on weather patterns of a specific weather station.')
+    data_eskom=pd.read_csv("ESK2033.csv")
+    gff=pd.read_csv("myupdateddata.csv")
   
-m = folium.Map(location=[data['LATITUDE'].mean(), data['LONGITUDE'].mean()], zoom_start=10)
-marker_cluster = MarkerCluster().add_to(m)
+    df['Timestamp'] = pd.to_datetime(df['Date Time Hour Beginning'])
 
-for index, row in data.iterrows():
-    prcp = row['PRCP']
-    tmax = row['TMAX']
-    tmin = row['TMIN']
-    tavg = row['TAVG']
-    input_data = [[prcp, tmax, tmin, tavg]]
-    energy_type = model.predict(input_data)[0]
-    
-    if energy_type == 'Solar':
-        color = 'green'
-    elif energy_type == 'Non-Renewable':
-        color = 'red'
-    else:
-        color = 'gray'
-        
-    folium.Marker([row['LATITUDE'], row['LONGITUDE']], 
-                  popup=f"Station: {row['STATION']}\nEnergy Type: {energy_type}", 
-                  icon=folium.Icon(color=color)).add_to(marker_cluster)
-    
-    # Add location icons with different colors
-    if energy_type == 'Solar':
-        icon_color = 'green'
-    elif energy_type == 'Wind':
-        icon_color = 'red'
-    else:
-        icon_color = 'gray'
-        
-    folium.Marker([row['LATITUDE'], row['LONGITUDE']], 
-                  icon=folium.Icon(color=icon_color)).add_to(m)
+    #Get units of time from the timestamp
+    df['min'] = df['Timestamp'].dt.minute
+    df['hour'] = df['Timestamp'].dt.hour
+    df['wday'] = df['Timestamp'].dt.dayofweek
+    df['mday'] = df['Timestamp'].dt.day
+    df['yday'] = df['Timestamp'].dt.dayofyear
+    df['month'] = df['Timestamp'].dt.month
+    df['year'] = df['Timestamp'].dt.year
+    df['date'] =  df['Timestamp'].dt.date
 
-folium_static(m)
+    # Map numeric months to month names
+    month_dict = {1:'January', 2:'February', 3:'March', 4:'April', 5:'May', 6:'June', 
+                7:'July', 8:'August', 9:'September', 10:'October', 11:'November', 12:'December'}
+    df['month'] = df['month'].map(month_dict)
 
+    fig = px.line(df, x=df.index, y='Residual Demand')
+    st.plotly_chart(fig)
 
+    fig2 = plt.figure(figsize=(30,10))
 
-    # # Plot the data on a map
-    # m = folium.Map(location=[data['LATITUDE'].mean(), data['LONGITUDE'].mean()], zoom_start=10)
-    # for index, row in data.iterrows():
-    #     prcp = row['PRCP']
-    #     tmax = row['TMAX']
-    #     tmin = row['TMIN']
-    #     tavg = row['TAVG']
-    #     input_data = [[prcp, tmax, tmin, tavg]]
-    #     energy_type = model.predict(input_data)[0]
-    #     folium.Marker([row['LATITUDE'], row['LONGITUDE']], popup=f"Station: {row['STATION']}\nEnergy Type: {energy_type}").add_to(m)
-    # folium_static(m)
-    
+    # Set the plot title and axis labels
+    plt.title('Planned and unplanned power cuts BY month')
+    plt.xlabel('Year')
+    plt.ylabel('Total Power cuts')
+    plt.xticks(rotation=45)
 
+    # Show the plot
+    st.pyplot(fig2)
+
+    # Reshape the data into a long format
+    df = pd.melt(df, id_vars=['year'], value_vars=['Thermal Generation','Dispatchable Generation',
+       'Nuclear Generation', 'Eskom Gas Generation', 'Eskom OCGT Generation',
+       'Hydro Water Generation', 'Pumped Water Generation'], 
+                  var_name='category', value_name='ann')
+
+    # Set the plot title and axis labels
+    plt.title('Imports and Exports')
+    plt.xlabel('Year')
+    plt.ylabel('Inports/Exports (Gwh)')
 
 # Add a footer
 st.sidebar.text('')
