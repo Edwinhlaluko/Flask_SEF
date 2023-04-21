@@ -86,7 +86,6 @@ elif choice == 'Clustering Model':
     
     season_data = data[data['SEASON'] == season]
    
-
     m = folium.Map(location=[data['LATITUDE'].mean(), data['LONGITUDE'].mean()], zoom_start=10)
     marker_cluster = MarkerCluster().add_to(m)
 
@@ -121,7 +120,6 @@ elif choice == 'Clustering Model':
                     icon=folium.Icon(color=icon_color)).add_to(m)
 
     folium_static(m)
-
 
 elif choice == 'Dashboard':  # Add new elif statement
     st.header('SmartEnergyForecast(SEF) Dashboard')
