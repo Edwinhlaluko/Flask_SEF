@@ -8,6 +8,10 @@ import plotly.express as px
 import folium
 from streamlit_folium import folium_static
 from folium.plugins import MarkerCluster
+from PIL import Image
+import os
+import plotly.graph_objs as go
+
 
 st.set_option('deprecation.showPyplotGlobalUse', False)
 
@@ -41,10 +45,10 @@ elif choice == 'Prediction Model':
     st.header('Prediction Model')
     st.write('This model predicts energy consumption based on variables ResidualDemand, RSAContractedDemand, ThermalGeneration, PumpedWaterGeneration, and PumpedWaterSCOPumping.')
     with st.form(key='model1_form'):
-        rsa_contracted_demand = st.number_input('RSA Contracted Demand', min_value=0, max_value=100000, value=50, step=1)
-        thermal_generation = st.number_input('Thermal Generation', min_value=0, max_value=100000, value=50, step=1)
-        pumped_water_generation = st.number_input('Pumped Water Generation', min_value=0, max_value=100000, value=50, step=1)
-        pumped_water_sco_pumping = st.number_input('Pumped Water SCO Pumping', min_value=0, max_value=100000, value=50, step=1)
+        rsa_contracted_demand = st.number_input('RSA Contracted Demand', min_value=-100000, max_value=100000, value=50, step=1)
+        thermal_generation = st.number_input('Thermal Generation', min_value=-100000, max_value=100000, value=50, step=1)
+        pumped_water_generation = st.number_input('Pumped Water Generation', min_value=-100000, max_value=100000, value=50, step=1)
+        pumped_water_sco_pumping = st.number_input('Pumped Water SCO Pumping', min_value=-100000, max_value=100000, value=50, step=1)
         submit_button = st.form_submit_button(label='Predict')
     if submit_button:
         input_data = [[rsa_contracted_demand, thermal_generation, pumped_water_generation, pumped_water_sco_pumping]]
@@ -54,8 +58,13 @@ elif choice == 'Prediction Model':
         st.success(f'Previous demand: {previous_demand:.2f}\nPredicted demand: {prediction[0]:.2f} ({percent_change:.2f}%)')
 
     fig = px.line(df, x=df.index, y='Residual Demand')
-    
+    if submit_button:
+        input_data = [[rsa_contracted_demand, thermal_generation, pumped_water_generation, pumped_water_sco_pumping]]
+        prediction = predict(model1, input_data)
+        fig.add_trace(go.Scatter(x=[df.index[-1], df.index[-1]], y=[0, prediction[0]],
+                                mode="lines", name="Prediction", line=dict(color='red')))
     st.plotly_chart(fig)
+
 
 elif choice == 'Clustering Model':
     st.header('Clustering Model')
@@ -85,7 +94,7 @@ elif choice == 'Clustering Model':
     data['SEASON'] = data['DATE'].apply(lambda x: seasons[x.month])
     
     season_data = data[data['SEASON'] == season]
-   
+
     m = folium.Map(location=[data['LATITUDE'].mean(), data['LONGITUDE'].mean()], zoom_start=10)
     marker_cluster = MarkerCluster().add_to(m)
 
@@ -144,6 +153,7 @@ elif choice == 'Dashboard':  # Add new elif statement
                 7:'July', 8:'August', 9:'September', 10:'October', 11:'November', 12:'December'}
     df['month'] = df['month'].map(month_dict)
 
+    st.title('Line Graph')
     fig = px.line(df, x=df.index, y='Residual Demand')
     st.plotly_chart(fig)
 
@@ -165,9 +175,42 @@ elif choice == 'Dashboard':  # Add new elif statement
                   var_name='category', value_name='ann')
 
     # Set the plot title and axis labels
+    st.title('Total International exports per year')
     plt.title('Imports and Exports')
     plt.xlabel('Year')
     plt.ylabel('Inports/Exports (Gwh)')
+
+
+    image_path = "/Users/da_learner_m1_19/Desktop/Screenshot 2023-04-24 at 11.25.02.png"
+    if os.path.exists(image_path):
+        image = Image.open(image_path)
+        st.image(image)
+    else:
+        st.write("Error: The specified image file does not exist.")
+
+    st.title('Total Schedulled Power cuts Versus Unschedulled Power Cuts Occured ')
+    image_path = "/Users/da_learner_m1_19/Desktop/Screenshot 2023-04-24 at 10.41.42.png"
+    if os.path.exists(image_path):
+        image = Image.open(image_path)
+        st.image(image)
+    else:
+        st.write("Error: The specified image file does not exist.")  
+
+    st.title('Nuclear Generation From 2018 to 2023')
+    image_path = "/Users/da_learner_m1_19/Desktop/Screenshot 2023-04-24 at 11.37.50.png"
+    if os.path.exists(image_path):
+        image = Image.open(image_path)
+        st.image(image)
+    else:
+        st.write("Error: The specified image file does not exist.")
+
+    st.title('Nuclear Generation From 2018 to 2023')
+    image_path = "/Users/da_learner_m1_19/Desktop/Screenshot 2023-04-24 at 10.41.42.png"
+    if os.path.exists(image_path):
+        image = Image.open(image_path)
+        st.image(image)
+    else:
+        st.write("Error: The specified image file does not exist.")            
 
 # Add a footer
 st.sidebar.text('')
