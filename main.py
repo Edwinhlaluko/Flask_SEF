@@ -57,15 +57,6 @@ elif choice == 'Prediction Model':
         percent_change = (prediction[0] - previous_demand) / previous_demand * 100
         st.success(f'Previous demand: {previous_demand:.2f}\nPredicted demand: {prediction[0]:.2f} ({percent_change:.2f}%)')
 
-    fig = px.line(df, x=df.index, y='Residual Demand')
-    if submit_button:
-        input_data = [[rsa_contracted_demand, thermal_generation, pumped_water_generation, pumped_water_sco_pumping]]
-        prediction = predict(model1, input_data)
-        fig.add_trace(go.Scatter(x=[df.index[-1], df.index[-1]], y=[0, prediction[0]],
-                                mode="lines", name="Prediction", line=dict(color='red')))
-    st.plotly_chart(fig)
-
-
 elif choice == 'Clustering Model':
     st.header('Clustering Model')
     st.write('This page shows recommendations of renewable energy source based on weather patterns of a specific weather station.')
