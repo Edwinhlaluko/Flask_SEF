@@ -64,6 +64,15 @@ elif choice == 'Prediction Model':
         previous_prediction = prediction[0]
         st.session_state['previous_prediction'] = previous_prediction
 
+        st.title('History Values used to compare the performance of the model')
+        image_path = "/Users/da_learner_m1_19/Downloads/Screenshot_2023-04-25_at_14.08.50.png"
+        if os.path.exists(image_path):
+            image = Image.open(image_path)
+            st.image(image)
+        else:
+            st.write("Error: The specified image file does not exist.")      
+
+
 elif choice == 'Clustering Model':
     st.header('Clustering Model')
     st.write('This page shows recommendations of renewable energy source based on weather patterns of a specific weather station.')
