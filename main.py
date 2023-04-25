@@ -12,7 +12,6 @@ from PIL import Image
 import os
 import plotly.graph_objs as go
 
-
 st.set_option('deprecation.showPyplotGlobalUse', False)
 
 # Load the machine learning models
@@ -43,19 +42,25 @@ if choice == 'Home':
 
 elif choice == 'Prediction Model':
     st.header('Prediction Model')
-    st.write('This model predicts energy consumption based on variables ResidualDemand, RSAContractedDemand, ThermalGeneration, PumpedWaterGeneration, and PumpedWaterSCOPumping.')
+    st.write('This model predicts energy consumption based on variables Residual Demand, RSA Contracted Demand, Thermal Generation, Pumped Water Generation, and Pumped Water SCO Pumping.')
     with st.form(key='model1_form'):
         rsa_contracted_demand = st.number_input('RSA Contracted Demand', min_value=-100000, max_value=100000, value=50, step=1)
         thermal_generation = st.number_input('Thermal Generation', min_value=-100000, max_value=100000, value=50, step=1)
         pumped_water_generation = st.number_input('Pumped Water Generation', min_value=-100000, max_value=100000, value=50, step=1)
         pumped_water_sco_pumping = st.number_input('Pumped Water SCO Pumping', min_value=-100000, max_value=100000, value=50, step=1)
         submit_button = st.form_submit_button(label='Predict')
+    # initialize previous prediction as None
+    previous_prediction = st.session_state.get('previous_prediction')
     if submit_button:
         input_data = [[rsa_contracted_demand, thermal_generation, pumped_water_generation, pumped_water_sco_pumping]]
         prediction = predict(model1, input_data)
-        previous_demand = df['Residual Demand'].iloc[-2]
+        # update previous_demand with previous_prediction if it exists
+        previous_demand = previous_prediction if previous_prediction is not None else df['Residual Demand'].iloc[-2]
         percent_change = (prediction[0] - previous_demand) / previous_demand * 100
         st.success(f'Previous demand: {previous_demand:.2f}\nPredicted demand: {prediction[0]:.2f} ({percent_change:.2f}%)')
+        # update previous_prediction with current prediction
+        previous_prediction = prediction[0]
+        st.session_state['previous_prediction'] = previous_prediction
 
 elif choice == 'Clustering Model':
     st.header('Clustering Model')
