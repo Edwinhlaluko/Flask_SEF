@@ -11,6 +11,8 @@ from folium.plugins import MarkerCluster
 from PIL import Image
 import os
 import plotly.graph_objs as go
+import json
+import branca.colormap as cm
 
 st.set_option('deprecation.showPyplotGlobalUse', False)
 
@@ -57,7 +59,7 @@ elif choice == 'Prediction Model':
         # update previous_demand with previous_prediction if it exists
         previous_demand = previous_prediction if previous_prediction is not None else df['Residual Demand'].iloc[-2]
         percent_change = (prediction[0] - previous_demand) / previous_demand * 100
-        st.success(f'Previous demand: {previous_demand:.2f}\nPredicted demand: {prediction[0]:.2f} ({percent_change:.2f}%)')
+        st.success(f'Previous demand: {previous_demand:.2f} kW\nPredicted demand: {prediction[0]:.2f} kW ({percent_change:.2f}%)')
         # update previous_prediction with current prediction
         previous_prediction = prediction[0]
         st.session_state['previous_prediction'] = previous_prediction
@@ -131,7 +133,6 @@ elif choice == 'Dashboard':  # Add new elif statement
     st.write('This page shows recommendations of renewable energy source based on weather patterns of a specific weather station.')
     data_eskom=pd.read_csv("ESK2033.csv")
     gff=pd.read_csv("myupdateddata.csv")
-  
     df['Timestamp'] = pd.to_datetime(df['Date Time Hour Beginning'])
 
     #Get units of time from the timestamp
