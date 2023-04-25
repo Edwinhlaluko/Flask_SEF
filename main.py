@@ -65,7 +65,7 @@ elif choice == 'Prediction Model':
         st.session_state['previous_prediction'] = previous_prediction
 
         st.title('History Values used to compare the performance of the model')
-        image_path = "/Users/da_learner_m1_19/Downloads/Screenshot_2023-04-25_at_14.08.50.png"
+        image_path = "/Users/da_learner_m1_19/Downloads/Screenshot_2023-04-25_at_15.44.29.png"
         if os.path.exists(image_path):
             image = Image.open(image_path)
             st.image(image)
